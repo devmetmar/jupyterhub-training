@@ -1,0 +1,18 @@
+version: '3'
+services:
+  jupyterhub:
+    # image: jupyterhub_training_jupyterhub:latest
+    build: .
+    ports:
+      - "9933:8000"
+    volumes:
+      - "/data/local/marine-training/data/:/data/local/marine-training/data/:ro"
+      - ./jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py
+      - ./templates:/opt/template:ro
+      - /data/local/apps/jupyterhub_training/homes:/home
+    deploy:
+      resources:
+        limits:
+          memory: 300G
+        reservations:
+          memory: 40G

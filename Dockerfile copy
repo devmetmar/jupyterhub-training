@@ -1,0 +1,77 @@
+FROM mambaorg/micromamba:1.5.6
+
+# Create a non-root base for JupyterHub, NativeAuthenticator, and JupyterLab
+USER root
+
+# Install JupyterHub + lab + NativeAuthenticator
+RUN micromamba install -y -n base -c conda-forge \
+    pip \
+    jupyterhub \
+    jupyterlab \
+    notebook \
+    ipykernel \
+    git \
+    jupyterlab-git \
+    && micromamba clean --all --yes
+
+RUN micromamba run -n base pip install git+https://github.com/jupyterhub/nativeauthenticator.git
+
+# Create 'ofs' environment and install packages (customize as needed)
+COPY envs/ofs_env.yml /tmp/
+RUN micromamba env create -f /tmp/ofs_env.yml
+
+# Register 'ofs' kernel to show up in Jupyter
+RUN /opt/conda/envs/ofs/bin/python -m ipykernel install --prefix=/opt/conda --name ofs --display-name "Python (OFS)"
+
+RUN useradd -m -s /bin/bash tyo && echo "tyo:restrictedaccess" | chpasswd
+RUN useradd -m -s /bin/bash opn && echo "opn:Hi!!!Opn_Up" | chpasswd
+RUN useradd -m -s /bin/bash ferry && echo "ferry:maritim4ever" | chpasswd
+RUN useradd -m -s /bin/bash dika && echo "dika:maritim4ever" | chpasswd
+RUN useradd -m -s /bin/bash oky && echo "oky:maritim4ever" | chpasswd
+
+# Install sudo and set root password for 'su'
+RUN apt-get update && apt-get install -y sudo && \
+    echo "root:admin123" | chpasswd
+
+# (Optional) Add admin user to sudo group
+RUN usermod -aG sudo tyo
+
+# Create 100 users
+RUN for i in $(seq -w 1 50); do \
+    useradd -m -s /bin/bash user$i && \
+    echo "user$i:training123" | chpasswd; \
+    done
+
+# Create groups
+RUN groupadd admin && groupadd trainer && groupadd trainee
+
+# Add users to groups
+RUN usermod -aG admin opn && \
+    usermod -aG admin tyo && \
+    usermod -aG admin ferry && \
+    usermod -aG trainer tyo && \
+    usermod -aG trainer dika && \
+    usermod -aG trainer oky && \
+    for i in $(seq -w 1 50); do usermod -aG trainee user$i; done
+
+# Set global micromamba shell init and activate ofs
+RUN echo 'export MAMBA_ROOT_PREFIX=/opt/conda' > /etc/profile.d/mamba.sh && \
+    echo 'eval "$(micromamba shell hook --shell bash)"' >> /etc/profile.d/mamba.sh && \
+    echo 'micromamba activate' >> /etc/profile.d/mamba.sh && \
+    chmod +x /etc/profile.d/mamba.sh
+
+# Copy templates
+COPY templates/ /opt/template/
+COPY templates/login-template-copy.sh /etc/skel/.bashrc
+
+# Permissions
+RUN chmod -R 755 /opt/template
+
+# Final env setup
+ENV SHELL=/bin/bash \
+    CONDA_PREFIX=/opt/conda \
+    PATH=/opt/conda/bin:$PATH \
+    CONDA_DEFAULT_ENV=base \
+    MAMBA_DOCKERFILE_ACTIVATE=1
+
+CMD ["jupyterhub", "--ip=0.0.0.0", "--port=8000", "--config=/srv/jupyterhub/jupyterhub_config.py"]

@@ -1,0 +1,20 @@
+name: ofs
+channels:
+  - conda-forge
+dependencies:
+  - numpy
+  - pandas
+  - xarray
+  - netCDF4
+  - dask
+  - ipykernel
+  - jupyterlab
+  - geopandas
+  - matplotlib
+  - cartopy
+  - scikit-learn
+  - joblib
+  - openpyxl
+  - zarr==2.18.4
+  - s3fs
+  - ghp-import
