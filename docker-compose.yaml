@@ -10,9 +10,18 @@ services:
       - ./jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py
       - ./templates:/opt/template:ro
       - /data/local/apps/jupyterhub_training/homes:/home
+      - "jupyteretc:/etc"
+      - "jupyterroot:/root"
+      - "jupyterusr:/usr"
+      - "jupyterbin:/bin"
     deploy:
       resources:
         limits:
           memory: 300G
         reservations:
           memory: 40G
+volumes:
+  jupyteretc:
+  jupyterroot:
+  jupyterusr:
+  jupyterbin:
