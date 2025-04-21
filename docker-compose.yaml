@@ -7,6 +7,7 @@ services:
       - "9933:8000"
     volumes:
       - "/data/local/marine-training/data/:/data/local/marine-training/data/"
+      - "/data/local/shpmetoswilpro/:/data/local/shpmetoswilpro/"
       - ./jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py
       - ./templates:/opt/template:ro
       - /data/local/apps/jupyterhub_training/homes:/home

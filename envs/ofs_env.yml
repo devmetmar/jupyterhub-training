@@ -18,3 +18,4 @@ dependencies:
   - zarr==2.18.4
   - s3fs
   - ghp-import
+  - jupyterbook
