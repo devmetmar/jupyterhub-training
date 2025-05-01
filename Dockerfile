@@ -6,6 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
+    bzip2 \
     git \
     sudo \
     adduser \
@@ -52,24 +53,33 @@ RUN echo "source /opt/conda/etc/profile.d/conda.sh" > /etc/profile.d/conda-init.
     echo "conda activate ofs" >> /etc/profile.d/conda-init.sh && \
     chmod +x /etc/profile.d/conda-init.sh
 
+# Lock down /opt/conda for root-only install
+RUN chown -R root:root /opt/conda && \
+    chmod -R go-w /opt/conda
+#     find /opt/conda -type d -exec chmod 755 {} \; && \
+#     find /opt/conda -type f -exec chmod 644 {} \;
+
+# Prevent per-user install and override
+RUN mkdir -p /etc/skel && \
+    echo "alias conda='echo ❌ Conda install is restricted to admin only.'" >> /etc/skel/.bashrc && \
+    echo "alias micromamba='echo ❌ Micromamba install is restricted to admin only.'" >> /etc/skel/.bashrc && \
+    echo "export CONDA_ENVS_PATH=/opt/conda/envs" >> /etc/skel/.bashrc && \
+    echo "export CONDA_PKGS_DIRS=/opt/conda/pkgs" >> /etc/skel/.bashrc
+
+# Copy user creation script and training files
 COPY create_users.py /usr/local/bin/create_users.py
 COPY user_credentials.txt /tmp/user_credentials.txt
-
-# Set root password for su access
-RUN echo "root:admin123" | chpasswd
-
-# Copy training templates
 COPY templates/ /opt/template/
 RUN chmod -R 755 /opt/template
 
-# GIT CLONE
-RUN echo '--- CHECKING GIT CLONE ---' && \
-    git clone https://github.com/devmetmar/marinemet-training.git /opt/marinemet-training && \
-    echo '✅ Finished cloning. Directory contents:' && \
-    ls -lah /opt/marinemet-training || echo '❌ Clone failed'
+# Clone training materials
+RUN git clone https://github.com/devmetmar/marinemet-training.git /opt/marinemet-training || echo "Clone failed"
 
 # Copy JupyterHub config
 COPY jupyterhub_config.py /srv/jupyterhub/jupyterhub_config.py
 
-# Start JupyterHub
+# Set root password
+RUN echo "root:admin123" | chpasswd
+
+# Start JupyterHub and create users
 CMD ["bash", "-c", "python /usr/local/bin/create_users.py && jupyterhub --ip=0.0.0.0 --port=8000 --config=/srv/jupyterhub/jupyterhub_config.py"]
