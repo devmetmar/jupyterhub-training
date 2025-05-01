@@ -35,20 +35,45 @@ import os
 import shutil
 import pwd
 import grp
+import stat
 
 def multi_copy_templates(spawner):
     sources_targets = [
         ("/opt/marinemet-training/1_", "templates/1_"),
-        ("/opt/marinemet-training/2_", "templates/2_"),
+        # ("/opt/marinemet-training/2_", "templates/2_"),
         ("/opt/marinemet-training/data", "templates/data")
     ]
 
     username = spawner.user.name
     home_dir = f"/home/{username}"
+    templates_dir = os.path.join(home_dir, "templates")
 
     uid = pwd.getpwnam(username).pw_uid
     gid = grp.getgrnam(username).gr_gid
 
+    # Ensure user owns the directory before deletion (in case root created it earlier)
+    if os.path.exists(templates_dir):
+        spawner.log.info(f"🗑️ Attempting to remove templates directory: {templates_dir}")
+        try:
+            spawner.log.info(f"🗑️ Attempting to remove templates directory: {templates_dir}")
+
+            # Change permission to ensure it's deletable
+            for root, dirs, files in os.walk(templates_dir):
+                for momo in dirs + files:
+                    path = os.path.join(root, momo)
+                    try:
+                        os.chmod(path, stat.S_IWUSR | stat.S_IRUSR | stat.S_IXUSR)
+                    except Exception as chmod_err:
+                        spawner.log.warning(f"⚠️ Failed to chmod {path}: {chmod_err}")
+
+            shutil.rmtree(templates_dir)
+            spawner.log.info(f"✅ Successfully removed: {templates_dir}")
+        except Exception as e:
+            spawner.log.error(f"❌ Error removing {templates_dir}: {e}")
+            raise
+    else:
+        spawner.log.info(f"🗑️No need to remove templates directory: {templates_dir}")
+        
     for template_dir, target_path in sources_targets:
         target_dir = os.path.join(home_dir, target_path)
         spawner.log.info(f"⏳ Copying templates from {template_dir} to {target_dir}")
