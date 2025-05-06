@@ -40,8 +40,9 @@ import stat
 def multi_copy_templates(spawner):
     sources_targets = [
         ("/opt/marinemet-training/1_", "templates/1_"),
-        # ("/opt/marinemet-training/2_", "templates/2_"),
-        ("/opt/marinemet-training/data", "templates/data")
+        ("/opt/marinemet-training/2_", "templates/2_"),
+        ("/opt/marinemet-training/data", "templates/data"),
+        ("/opt/marinemet-training/img", "templates/img")
     ]
 
     username = spawner.user.name
