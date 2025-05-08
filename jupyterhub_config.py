@@ -41,6 +41,8 @@ def multi_copy_templates(spawner):
     sources_targets = [
         ("/opt/marinemet-training/1_", "templates/1_"),
         ("/opt/marinemet-training/2_", "templates/2_"),
+        ("/opt/marinemet-training/3_", "templates/3_"),
+        ("/opt/marinemet-training/4_", "templates/4_"),
         ("/opt/marinemet-training/data", "templates/data"),
         ("/opt/marinemet-training/img", "templates/img")
     ]
